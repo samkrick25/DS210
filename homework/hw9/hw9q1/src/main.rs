@@ -1,8 +1,18 @@
 use std::fs::File;
 use std::io::prelude::*;
+use rand::Rng;
 
-fn write_file(path: &str) -> {
 
+fn write_file(path: &str) {
+    let mut file = File::create(path).expect("Unable to create file!");
+    let mut rng = rand::thread_rng();
+    for _j in 0..=500 {
+        let point = &rng.gen_range(-100_000_000..=100_000_000);
+        let labeler = &rng.gen_range(0.0..=1.0);
+        let label = if *labeler >= 0.5 {1} else {0};
+        let s: String = format!("{} {}\n", point, label);
+        file.write_all(s.as_bytes()).expect("Unable to create file");
+    }
 }
 
 fn read_file(path: &str) -> Vec<(i32, i32)>{
@@ -39,6 +49,7 @@ fn find_best_split(data: &Vec<(i32, i32)>) -> (i32, f64) {
 }
 
 fn main() {
+    write_file("data.txt");
     let data = read_file("data.txt");
     let (split, accuracy) = find_best_split(&data);
     println!("if x >= {}:", split);

@@ -32,12 +32,12 @@ fn read_file(path: &str) -> Vec<(i32, i32)>{
 fn find_best_split(data: &Vec<(i32, i32)>) -> (i32, f64) {
     let mut best_split_point = 0;
     let mut best_accuracy = 0.0;
-    for point in data {
-        let split = point.0;
+    for p in data {
+        let split = p.0;
         let mut correct = 0;
-        for p in data {
-            let predicted_label = if p.0 >= split {1} else {0};
-            if predicted_label == p.1 {correct += 1};
+        for point in data {
+            let predicted_label = if point.0 >= split {1} else {0};
+            if predicted_label == point.1 {correct += 1};
         }
         let accuracy = correct as f64 / data.len() as f64;
         if accuracy > best_accuracy {
@@ -58,4 +58,11 @@ fn main() {
     println!("  Predicted label is 0");
     println!("Accuracy: {}", accuracy);
     println!("Complexity of O(n^2)");
+}
+
+#[test]
+fn test_find_split_point() {
+    let data =  vec![(10, 1), (-10, 0), (3, 0), (4, 1),(-5, 1), (11, 0), (12, 1)];
+    let split, accuracy = find_best_split(data);
+    asserteq!(split, 3, "Not finding the best split point!")
 }

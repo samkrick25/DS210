@@ -52,6 +52,9 @@ fn main() {
     write_file("data.txt");
     let data = read_file("data.txt");
     let (split, accuracy) = find_best_split(&data);
+    let first_5_entries = &data[..5];
+    println!("For the following data.txt:");
+    for entry in first_5_entries {println!("{:?}", entry)};
     println!("if x >= {}:", split);
     println!("  Predicted label is 1");
     println!("else:");
@@ -63,6 +66,6 @@ fn main() {
 #[test]
 fn test_find_split_point() {
     let data =  vec![(10, 1), (-10, 0), (3, 0), (4, 1),(-5, 1), (11, 0), (12, 1)];
-    let split, accuracy = find_best_split(data);
-    asserteq!(split, 3, "Not finding the best split point!")
+    let (split, _accuracy) = find_best_split(&data);
+    assert_eq!(split, 4, "Not finding the best split point!")
 }

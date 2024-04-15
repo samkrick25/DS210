@@ -8,9 +8,9 @@ mod graph {
     pub type EdgeList = Vec<(usize, usize)>;
     //create graph struct for storing number of vertices, edge list, and adjacency list
     pub struct Graph {
-        n: usize,
-        edges: EdgeList,
-        adjacencylist: AdjacencyList,
+        pub n: usize,
+        pub edges: EdgeList,
+        pub adjacencylist: AdjacencyList,
     }
 
     impl Graph {
@@ -55,5 +55,38 @@ mod graph {
             //just take the number of vertices, edge list, and adjacency list created from previous functions and return a Graph object
             Graph {n, edges, adjacencylist}
         }
+    }
+    pub mod PageRank {
+        pub fn random_walk(graph: &Graph) -> Vec<usize> {
+            let mut end_of_walks = vec![0; graph.n];
+            rng = rand::thread_rng();
+            for _ in 0..99 {
+                let mut current_node: Vertex = rng.gen_range(0..999);
+                for _ in 0..99 {
+                    if graph.adjacencylist[current_node].is_empty() {
+                        current_node = choose_new_node(current_node);
+                    }
+                    else {
+                        selection = rng.gen_range(0..9);
+                        if selection = 0 {
+                            current_node = choose_new_node(current_node)
+                        }
+                        if 0 < selection <= 9 {
+
+                        }
+                    }
+                }
+            } 
+        }
+        pub fn choose_new_node(current_node: Vertex) -> Vertex {
+            //this function is written to pick a random node to start from. it takes the current_node as an input returns a new node
+            //A while loop is used to ensure that the picked node is different than the current node. I create an rng thread, then
+            //as long as that node is not the same as the current node, a new node is generated.
+            rng = rand::thread_rng();
+            let mut new_node = current_node;
+            while new_node == current_node {
+                new_node = rng.gen_range(0..999);
+            }
+            new_node
     }
 }

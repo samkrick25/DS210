@@ -2,7 +2,6 @@
 //Ordering is used to create a custom tuple type that ranks on one value to be used in the ranking of nodes in the walking process
 //rand is used in the walking process
 //the other two are used for file reading
-use std::collections::BinaryHeap;
 use std::cmp::Ordering;
 use rand::Rng;
 use std::fs::File;
@@ -13,7 +12,7 @@ use rand::prelude::SliceRandom;
 pub type Vertex = usize;
 pub type AdjacencyList = Vec<Vec<Vertex>>;
 pub type EdgeList = Vec<(usize, usize)>;
-pub type EndingList = BinaryHeap<EndsTuple>;
+pub type EndingList = Vec<EndsTuple>;
 
 //create graph struct for storing number of vertices, edge list, and adjacency list
 pub struct GraphStruct {
@@ -85,47 +84,45 @@ impl Ord for EndsTuple {
     //but only compares on the first element, so when using in the walk function, the first element of this tuple will be the 
     //number of times a walk ended in the associated vertex
     fn cmp(&self, other: &Self) -> Ordering {
-        self.0.cmp(&other.0)
+        self.1.cmp(&other.1)
     }
 }
 
-//COMMENT
-pub trait PushOrCount {
-    fn push_or_count(&mut self, current_node: &Vertex);
-}
+// //COMMENT
+// pub trait PushOrCount {
+//     fn push_or_count(&mut self, current_node: &Vertex);
+// }
 
-//COMMENT
-impl<EndsTuple> PushOrCount for BinaryHeap<EndsTuple> {
-    //COMMENT
-    fn push_or_count(&mut self, current_node: &Vertex) {
-        let mut found = false;
-        let mut index: usize = 0;
-        for (i, &(endcount, _)) in self.iter().enumerate() {
-            if current_node == endcount {
-                found = true;
-                index = i;
-                break
-            }
+// //COMMENT
+// impl<EndsTuple> PushOrCount for BinaryHeap<EndsTuple> {
+//     //COMMENT
+fn push_or_count(endslist: &mut Vec<EndsTuple>, current_node: &Vertex) {
+    //just fully rewrite this to use a vector, binary heaps are unneccesary here, write a new function that finds the right node
+    //then at the end sort function by the first value of the tuple
+    let mut found = false;
+    let mut index: usize = 0;
+    for (i, ends) in endslist.iter().enumerate() {
+        if current_node == &ends.0 {
+            found = true;
+            index = i;
+            break
         }
-        if found {
-            let (node, mut count) = self.remove(index);
-            count += 1;
-            self.push((node, count));
-        }
-        else {self.push((*current_node, 1))}
     }
+    if found {
+        endslist[index].1 += 1
+    }
+    else {endslist.push(EndsTuple(*current_node, 1))}
 }
 
 pub mod PageRank {
     //this module will contain the pagerank function, as well as a test for the pagerank function
 
-    use std::collections::BinaryHeap;
     use super::*;
     
     pub fn random_walk(graph: &GraphStruct) -> EndingList {
         //this is the pagerank function, which does as described in hw10 description. 
-        let mut end_of_walks = BinaryHeap::new(); //Make this a priority queue instead (but how to keep track of vertex id?)
-        let rng = rand::thread_rng(); //start rng 
+        let mut end_of_walks = Vec::new(); 
+        let mut rng = rand::thread_rng(); //start rng 
         for _ in 0..100 { //do 100 random walks
             let mut current_node: Vertex = rng.gen_range(0..999); //pick a random node label to use as current node
             for _ in 0..100 { //do 100 random steps
@@ -141,12 +138,12 @@ pub mod PageRank {
                     }
                     if 0 < selection && selection <= 9 {
                         //look at the inner vector at the index of current node in the adjacency list
-                        let current_neighbors = graph.adjacencylist[current_node]; 
+                        let current_neighbors = &graph.adjacencylist[current_node]; 
                         current_node = *current_neighbors.choose(&mut rng).unwrap(); //choose on of the neighbors at random, handle Option
                     }
                 }
             }
-            end_of_walks.push_or_count(&current_node); //add one to the amount of times a walk ended at a certain node
+            push_or_count(&mut end_of_walks, &current_node); //add one to the amount of times a walk ended at a certain node
         }
         end_of_walks //TURN INTO A PRIORITY QUEUE? I need some way to save vertex identity
     }
@@ -155,22 +152,19 @@ pub mod PageRank {
         //this function is written to pick a random node to start from. it takes the current_node as an input returns a new node
         //A while loop is used to ensure that the picked node is different than the current node. I create an rng thread, then
         //as long as that node is not the same as the current node, a new node is generated.
-        let rng = rand::thread_rng();
+        let mut rng = rand::thread_rng();
         let mut new_node = current_node;
         while new_node == current_node {
-            new_node = &rng.gen_range(0..1000);
+            let new_node = &rng.gen_range(0..1000);
         }
         *new_node
     }
 
     pub fn print_top_5(end_of_walks: &EndingList, graph: &GraphStruct) {
         //COMMENT (i think i can do this better with closures but I don't know closures yet)
-        let top_5_nodes = vec![];
-        for _ in 0..5 {
-            top_5_nodes.push(end_of_walks.pop().unwrap());
-        }
-        let scores = vec![];
-        for EndsTuple(mut node, mut score) in top_5_nodes {
+        let top_5_nodes = &end_of_walks[0..5];
+        let mut scores = vec![];
+        for EndsTuple(node, score) in top_5_nodes.iter() {
             scores.push((node, score / (100*graph.n)));
         }
         println!("Top 5 PageRank scores:");

@@ -27,7 +27,7 @@ fn test_page_rank_score() {
     for EndsTuple(_node, score) in endings {
         scores.push(score as f64 / (10.0*graph.n as f64));
     }
-    let scores_sum = scores.iter().fold(0.0, |a, b| a + b);
+    let scores_sum = scores.iter().fold(0.0, |a, b| a + b); //this closure will sum all of my scores so I can check that it == 1.0
     assert_eq!((scores_sum - 1.0).abs() < 1e-10, true, //test is written like this because of floating point precision,
     "Scores do not add up to approximately 1.0!") //I check whether the difference between them is less than 1e-10, a small threshold
 }

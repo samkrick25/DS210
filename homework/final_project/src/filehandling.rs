@@ -25,7 +25,7 @@ fn read_articles(path: &str) -> ArticleMap {
 fn read_edges(path: &str) -> Vec<(String, String)> {
     let mut str_edges = vec![];
     let file = File::open(path).expect("File failed to open!");
-    let bufreader = std::io::BufReader::new(file):
+    let bufreader = std::io::BufReader::new(file);
     let lines = bufreader.lines().enumerate();
     for (line_number, line_result) in lines {
         let edge_url = line_result.unwrap();

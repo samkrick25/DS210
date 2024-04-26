@@ -17,7 +17,7 @@ fn read_articles(path: &str) -> ArticleMap {
             continue
         }
         let decodedarticle = decode(&articleurl).expect("Failed to decode article name!");
-        articles.insert(String::from(decodedarticle), line_number);
+        articles.insert(decodedarticle.into_owned(), line_number);
     }
     articles
 }

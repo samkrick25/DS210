@@ -72,15 +72,17 @@ pub fn read_shortest_paths(path: &str) -> ShortestPathsMat {
     let mut shortest_paths = vec![];
     for line in bufreader.lines() {
         let line = line.expect("Failed to read line!");
-        let distances: Vec<Option<usize>> = line
-            .chars()
-            .map(|c| if &c.to_string() == "_" {
-                None
+        let distances_str = line.chars().collect::<Vec<char>>();
+        let mut distances_num = vec![];
+        for distance in distances_str {
+            if distance == '_' {
+                distances_num.push(None);
             } else {
-                Some(c.to_digit(10).map(|d| d as usize))
-            }) //panicking here I think? just ask at discussion/OH
-            .collect();
-        shortest_paths.push(distances);
+                let u32dist = distance.to_digit(10).unwrap();
+                distances_num.push(Some(u32dist as usize));
+            }
+        }
+        shortest_paths.push(distances_num);
     }
     shortest_paths
 }

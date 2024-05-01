@@ -70,8 +70,11 @@ pub fn read_shortest_paths(path: &str) -> ShortestPathsMat {
     let file = File::open(path).expect("Failed to open file!");
     let bufreader = std::io::BufReader::new(file);
     let mut shortest_paths = vec![];
-    for line in bufreader.lines() {
-        let line = line.expect("Failed to read line!");
+    for (line_number, line) in bufreader.lines().enumerate() {
+        let line = line.unwrap();
+        if line_number < 18 {
+            continue
+        }
         let distances_str = line.chars().collect::<Vec<char>>();
         let mut distances_num = vec![];
         for distance in distances_str {

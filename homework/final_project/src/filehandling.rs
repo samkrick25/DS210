@@ -29,14 +29,14 @@ pub fn read_articles(path: &str) -> (ArticleMap, ArticleID) {
     let lines = bufreader.lines().enumerate(); //enumerate here because I need the line_number, since this will later be used
     for (line_number, line_result) in lines {  //in betweenness centrality function
         let articleurl = line_result.unwrap();
-        if line_number < 13 { //the first 12 lines of the file are information about the file and how to cite its authors. 
+        if line_number < 12 { //the first 12 lines of the file are information about the file and how to cite its authors. 
             continue          //since I don't want this information in my data, I skip the first 12 lines, since the first article is
         }                     //listed on line 13
         else {
             let decoded_article = decode(&articleurl).expect("Failed to decode article name!");
             let owned_article = decoded_article.into_owned();                  //.into_owned is used here since decode() returns a Cow Object,
-            articles.insert(owned_article.clone(), (line_number-13, 0, 0, 0)); // and I want to enter it in to my ArticleMap as a String
-            article_id.insert(line_number-13, owned_article.clone());
+            articles.insert(owned_article.clone(), (line_number-12, 0, 0, 0)); // and I want to enter it in to my ArticleMap as a String
+            article_id.insert(line_number-12, owned_article.clone());
         }
     }
     (articles, article_id)
@@ -52,7 +52,7 @@ pub fn read_edges(path: &str) -> EdgeListStr {
     let lines = bufreader.lines().enumerate();
     for (line_number, line_result) in lines {
         let edge_url = line_result.unwrap();
-        if line_number < 13 { //similar to the articles.tsv file, the first 12 lines of this file I do not want, so this if statement
+        if line_number < 12 { //similar to the articles.tsv file, the first 12 lines of this file I do not want, so this if statement
             continue          //will skip over them
         }
         let decoded_link = decode(&edge_url).expect("Failed to decode link!");
@@ -72,7 +72,7 @@ pub fn read_shortest_paths(path: &str) -> ShortestPathsMat {
     let mut shortest_paths = vec![];
     for (line_number, line) in bufreader.lines().enumerate() {
         let line = line.unwrap();
-        if line_number < 18 {
+        if line_number < 17 {
             continue
         }
         let distances_str = line.chars().collect::<Vec<char>>();

@@ -23,4 +23,5 @@ fn main() {
     centrality::get_degrees(&edge_list_str, &mut article_map);
     centrality::calc_degrees(&mut article_map);
     centrality::calc_betweenness(&shortest_path_mat, &mut article_map, &article_id_map);
+    println!("{:?}", article_map)
 }

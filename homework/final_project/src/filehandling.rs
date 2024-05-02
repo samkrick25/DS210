@@ -59,7 +59,7 @@ pub fn read_edges(path: &str) -> EdgeListStr {
         let mut edge_iter = decoded_link.split("\t");//since this file contains two article names separated by a tab, I use .split 
                                                      //to get them individually
         if let (Some(article1), Some(article2)) = (edge_iter.next(), edge_iter.next()){ //this will pattern match until my iterable is empty
-            str_edges.push((article1.to_string(), article2.to_string())); //and push the articles to my edge list
+            str_edges.push((article1.to_string(), article2.to_string()));               //and push the articles to my edge list
         }
     }
     str_edges

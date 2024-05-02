@@ -1,5 +1,7 @@
 use super::{ArticleMap, EdgeListStr, ArticleID, ShortestPathsMat, AdjacencyList};
+use std::collections::{HashSet, VecDeque};
 //TODO: ADD COMMENTS
+//TODO: make bfs, and calculate shortest path and predecessors through that, then modify functions to calculate shortest path for all pairs of nodes, 
 
 pub fn get_degrees(edges: &EdgeListStr, articles: &mut ArticleMap) {
     for (edge1, edge2) in edges {
@@ -53,18 +55,15 @@ pub fn reconstruct_shortest_path(
     let mut current = end;
     path.push(current);
     while current != start {
+        println!("{}, {}", current, start);
         for &neighbor in &adjacency_list[&current] {
             println!("looking at neighbors");
-            if shortest_paths[start][neighbor] != None && 
-            shortest_paths[neighbor][current] != None && 
-            shortest_paths[start][current] != None {
-                if shortest_paths[start][neighbor].unwrap() + 
-                shortest_paths[neighbor][current].unwrap() == shortest_paths[start][current].unwrap() {
-                    path.push(neighbor);
-                    current = neighbor;
-                    println!("path pushed");
-                    break;
-                }
+            if shortest_paths[start][neighbor].unwrap() + 
+            shortest_paths[neighbor][current].unwrap() == shortest_paths[start][current].unwrap() {
+                path.push(neighbor);
+                current = neighbor;
+                println!("path pushed");
+                break;
             }
         }
     }
@@ -78,23 +77,66 @@ pub fn calculate_betweenness_centrality(
     article_map: &mut ArticleMap,
     article_id: &ArticleID,
 ) {
-    let num_nodes = article_map.len();
-    for start in 0..num_nodes {
-        println!("Heyo");
-        for end in 0..num_nodes {
-            if start != end {
-                let path = reconstruct_shortest_path(adjacency_list, shortest_paths, start, end);
-                for node in path.iter().skip(1).take(path.len() - 1) {
-                    let article_name = article_id.get(node);
-                    let (_, _, _, between) = article_map.get_mut(article_name.unwrap()).unwrap();
-                    *between += 1.0;
-                    println!("Betweenness added");
+    //let num_nodes = article_map.len();
+    let connected_components = find_components(adjacency_list);
+
+    for component in connected_components {
+        println!("looking at component");
+        for start in &component {
+            println!("looking at start");
+            for end in &component {
+                println!("end");
+                if start != end {
+                    let path = reconstruct_shortest_path(adjacency_list, shortest_paths, *start, *end);
+                    for node in path.iter().skip(1).take(path.len() - 1) {
+                        let article_name = article_id.get(node);
+                        let (_, _, _, between) = article_map.get_mut(article_name.unwrap()).unwrap();
+                        *between += 1.0;
+                        println!("Betweenness added");
+                    }
                 }
             }
         }
+        let normal_factor = (component.len() - 1) as f64 * (component.len() - 1) as f64 / 2.0;
+        for node in &component {
+            let article_name = article_id.get(node);
+            let (_, _, _, betweenness) = article_map.get_mut(article_name.unwrap()).unwrap();
+            *betweenness /= normal_factor;
+        }
     }
-    let normal_factor = (num_nodes - 1) as f64 * (num_nodes - 1) as f64 / 2.0;
-    for (_, _, _, betweenness) in article_map.values_mut() {
-        *betweenness /= normal_factor;
+}
+
+fn dfs(
+    node: usize,
+    adjacency_list: &AdjacencyList,
+    visited: &mut HashSet<usize>,
+    component: &mut Vec<usize>,
+) {
+    // Mark the current node as visited
+    visited.insert(node);
+    component.push(node);
+    // Visit all unvisited neighbors
+    if adjacency_list.contains_key(&node) {
+        println!("were in");
+        for &neighbor in &adjacency_list[&node] {
+            if !visited.contains(&neighbor) {
+                dfs(neighbor, adjacency_list, visited, component);
+            }
+        }
     }
+}
+
+fn find_components(adjacency_list: &AdjacencyList) -> Vec<Vec<usize>> {
+    let mut components = Vec::new();
+    let mut visited = HashSet::new();
+
+    for &node in adjacency_list.keys() {
+        if !visited.contains(&node) {
+            let mut component = Vec::new();
+            dfs(node, adjacency_list, &mut visited, &mut component);
+            components.push(component);
+        }
+    }
+
+    components
 }

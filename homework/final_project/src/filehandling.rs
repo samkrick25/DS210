@@ -15,7 +15,6 @@ pub type ShortestPathsMat = Vec<Vec<Option<usize>>>;
 
 //TODO: if i have time make the values in ArticleMap into a struct that contains nodeID, indegree cent, outdegree cent, between cent
 //TODO: add comments
-//TODO: find best way to display results
 
 pub fn read_articles(path: &str) -> (ArticleMap, ArticleID) {
     //this function will read in the file containing the article names. Some article names are URL encoded, so I use the external 

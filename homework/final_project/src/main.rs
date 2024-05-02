@@ -1,10 +1,6 @@
 mod filehandling;
 use filehandling::centrality;
 
-//good way to visualize my data? should I be graphing everything at the start or would that be too cluttered?
-//what kind of output is expected, or best for this kind of scenario?
-//do comments count for line requirement if they are useful comments?
-
 //TODO: write tests for get_degrees, calc_degrees, calc_betweenness
 //library to graph --> plotters
 //3 graphs, if it takes longer than 10min to gen graph, then just plot and highlight the top

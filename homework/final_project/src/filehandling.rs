@@ -12,7 +12,7 @@ pub type ArticleID = HashMap<usize, String>;
 pub type EdgeListStr = Vec<(String, String)>;
 pub type AdjacencyList = HashMap<usize, Vec<usize>>;
 pub type EdgeListInt = Vec<(usize, usize)>;
-pub type ShortestPathsMat = Vec<Vec<Option<usize>>>;
+//pub type ShortestPathsMat = Vec<Vec<Option<usize>>>;
 
 //TODO: if i have time make the values in ArticleMap into a struct that contains nodeID, indegree cent, outdegree cent, between cent
 //TODO: add comments
@@ -65,31 +65,6 @@ pub fn read_edges(path: &str) -> EdgeListStr {
     str_edges
 }
 
-pub fn read_shortest_paths(path: &str) -> ShortestPathsMat {
-    //
-    let file = File::open(path).expect("Failed to open file!");
-    let bufreader = std::io::BufReader::new(file);
-    let mut shortest_paths = vec![];
-    for (line_number, line) in bufreader.lines().enumerate() {
-        let line = line.unwrap();
-        if line_number < 17 {
-            continue
-        }
-        let distances_str = line.chars().collect::<Vec<char>>();
-        let mut distances_num = vec![];
-        for distance in distances_str {
-            if distance == '_' {
-                distances_num.push(None);
-            } else {
-                let u32dist = distance.to_digit(10).unwrap();
-                distances_num.push(Some(u32dist as usize));
-            }
-        }
-        shortest_paths.push(distances_num);
-    }
-    shortest_paths
-}
-
 pub fn edge_string_to_number(articles: &ArticleMap, edges: &EdgeListStr) -> EdgeListInt {
     let mut edges_num = vec![];
     for (article1, article2) in edges {
@@ -100,12 +75,14 @@ pub fn edge_string_to_number(articles: &ArticleMap, edges: &EdgeListStr) -> Edge
     edges_num
 }
 
-pub fn adjacency_from_edges(edges_num: &EdgeListInt) -> AdjacencyList {
+pub fn adjacency_from_edges(edges_num: &EdgeListInt) -> (AdjacencyList, AdjacencyList) {
     let mut adjacency_list = HashMap::new();
+    let mut adjacency_list_rev = HashMap::new();
     for (edge1, edge2) in edges_num {
         adjacency_list.entry(*edge1).or_insert(Vec::new()).push(*edge2);
+        adjacency_list_rev.entry(*edge2).or_insert(Vec::new()).push(*edge1);
     }
-    adjacency_list
+    (adjacency_list, adjacency_list_rev)
 }
 
 pub mod centrality;

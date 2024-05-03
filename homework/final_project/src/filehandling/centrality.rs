@@ -1,4 +1,4 @@
-use super::{ArticleMap, EdgeListStr, ArticleID, ShortestPathsMat, AdjacencyList};
+use super::{ArticleMap, EdgeListStr, ArticleID, AdjacencyList};
 use std::collections::{HashSet, VecDeque};
 //TODO: ADD COMMENTS
 //TODO: make bfs, and calculate shortest path and predecessors through that, then modify functions to calculate shortest path for all pairs of nodes, 
@@ -22,62 +22,59 @@ pub fn calc_degrees(articles: &mut ArticleMap) {
     }
 }
 
-// pub fn calc_betweenness(shortest_paths: &ShortestPathsMat, article_map: &mut ArticleMap, article_id: &ArticleID) {
-//     let length = article_map.len();
-//     for node in 0..length {
-//         let mut betweenness = 0;
-//         for i in 0..length {
-//             for j in 0..length {
-//                 if let (Some(total_dist), Some(between_dist_1), Some(between_dist_2)) = 
-//                 (shortest_paths[i][j], shortest_paths[i][node], shortest_paths[node][j]) {
-//                     //dbg!(&shortest_paths[i][j], &shortest_paths[i][node], &shortest_paths[node][j]);
-//                     if total_dist == between_dist_1 + between_dist_2 {
-//                         betweenness += 1;
-//                     }
-//                 } else {
-//                     continue
-//                 }
-//             }
-//         }
-//         let article = article_id.get(&node).unwrap();
-//         let (_, _, _, between_cent) = article_map.get_mut(article).unwrap();
-//         *between_cent += betweenness;
-//     }
-// }
-
 pub fn reconstruct_shortest_path(
-    adjacency_list: &AdjacencyList, 
-    shortest_paths: &ShortestPathsMat, 
+    pred: &Vec<Option<usize>>, 
     start: usize, 
     end: usize,
-) -> Vec<usize> {
+) -> Option<Vec<usize>> {
     let mut path = Vec::new();
-    let mut current = end;
-    path.push(current);
-    while current != start {
-        println!("{}, {}", current, start);
-        for &neighbor in &adjacency_list[&current] {
-            println!("looking at neighbors");
-            if shortest_paths[start][neighbor].unwrap() + 
-            shortest_paths[neighbor][current].unwrap() == shortest_paths[start][current].unwrap() {
-                path.push(neighbor);
-                current = neighbor;
-                println!("path pushed");
-                break;
-            }
+    let mut current = Some(end);
+    while let Some(node) = current {
+        if node == start {
+            path.push(node);
+            break;
+        }
+        if let Some(predecessor) = pred[node] {
+            path.push(node);
+            current = Some(predecessor);
+        } else {
+            // No path from start to end
+            current = None
         }
     }
     path.reverse();
-    path
+    Some(path)
+}
+
+pub fn bfs_predecessors(adjacency_list: &AdjacencyList, start: usize, article_id: &ArticleID) -> Vec<Option<usize>> {
+    let num_nodes = article_id.len();
+    let mut pred = vec![None; num_nodes];
+    let mut visited = vec![false; num_nodes];
+
+    let mut queue = VecDeque::new();
+    visited[start] = true;
+    queue.push_back(start);
+
+    while let Some(current) = queue.pop_front() {
+        if let Some(neighbors) = adjacency_list.get(&current) {
+            for &neighbor in neighbors {
+                if !visited[neighbor] {
+                    queue.push_back(neighbor);
+                    visited[neighbor] = true;
+                    pred[neighbor] = Some(current);
+                }
+            }
+        }
+    }
+
+    pred
 }
 
 pub fn calculate_betweenness_centrality(
     adjacency_list: &AdjacencyList, 
-    shortest_paths: &ShortestPathsMat, 
     article_map: &mut ArticleMap,
     article_id: &ArticleID,
 ) {
-    //let num_nodes = article_map.len();
     let connected_components = find_components(adjacency_list);
 
     for component in connected_components {
@@ -87,8 +84,11 @@ pub fn calculate_betweenness_centrality(
             for end in &component {
                 println!("end");
                 if start != end {
-                    let path = reconstruct_shortest_path(adjacency_list, shortest_paths, *start, *end);
-                    for node in path.iter().skip(1).take(path.len() - 1) {
+                    let pred = bfs_predecessors(&adjacency_list, *start, &article_id);
+                    let path = reconstruct_shortest_path(&pred, *start, *end);
+                    println!("{:?}", path);
+                    let length = path.clone().unwrap().len();
+                    for node in path.unwrap().iter().skip(1).take(length - 1) {
                         let article_name = article_id.get(node);
                         let (_, _, _, between) = article_map.get_mut(article_name.unwrap()).unwrap();
                         *between += 1.0;

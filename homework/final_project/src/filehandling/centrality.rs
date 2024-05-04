@@ -2,8 +2,7 @@ use super::{ArticleMap, EdgeListStr, ArticleID, AdjacencyList};
 use std::collections::{HashSet, VecDeque};
 use std::time::SystemTime;
 //TODO: ADD COMMENTS
-//TODO: make bfs, and calculate shortest path and predecessors through that, then modify functions to calculate shortest path for all pairs of nodes, 
-
+//TODO: write each component in the betweenness calculation in parallel? Id like to just know how many components there are but i guess thats the whoel issue rn
 
 pub fn get_degrees(edges: &EdgeListStr, articles: &mut ArticleMap) {
     for (edge1, edge2) in edges {

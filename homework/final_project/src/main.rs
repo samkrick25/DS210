@@ -20,5 +20,5 @@ fn main() {
     centrality::get_degrees(&edge_list_str, &mut article_map);
     centrality::calc_degrees(&mut article_map);
     centrality::calculate_betweenness_centrality(&adjacency_list, &mut article_map, &article_id_map);
-    println!("{:?}", article_map)
+    //println!("{:?}", article_map)
 }

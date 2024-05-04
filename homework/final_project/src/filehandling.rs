@@ -7,12 +7,11 @@ use urlencoding::decode;
 use std::collections::HashMap;
 
 //setting up types for readability later in code
-pub type ArticleMap = HashMap<String, (usize, usize, usize, f64)>;
+pub type ArticleMap = HashMap<String, (usize, usize, usize, usize, f64)>;
 pub type ArticleID = HashMap<usize, String>;
 pub type EdgeListStr = Vec<(String, String)>;
 pub type AdjacencyList = HashMap<usize, Vec<usize>>;
 pub type EdgeListInt = Vec<(usize, usize)>;
-//pub type ShortestPathsMat = Vec<Vec<Option<usize>>>;
 
 //TODO: if i have time make the values in ArticleMap into a struct that contains nodeID, indegree cent, outdegree cent, between cent
 //TODO: add comments
@@ -35,7 +34,7 @@ pub fn read_articles(path: &str) -> (ArticleMap, ArticleID) {
         else {
             let decoded_article = decode(&articleurl).expect("Failed to decode article name!");
             let owned_article = decoded_article.into_owned();                  //.into_owned is used here since decode() returns a Cow Object,
-            articles.insert(owned_article.clone(), (line_number-12, 0, 0, 0.0)); // and I want to enter it in to my ArticleMap as a String
+            articles.insert(owned_article.clone(), (line_number-12, 0, 0, 0, 0.0)); // and I want to enter it in to my ArticleMap as a String
             article_id.insert(line_number-12, owned_article.clone());
         }
     }
@@ -67,22 +66,22 @@ pub fn read_edges(path: &str) -> EdgeListStr {
 
 pub fn edge_string_to_number(articles: &ArticleMap, edges: &EdgeListStr) -> EdgeListInt {
     let mut edges_num = vec![];
+    let mut edges_num_rev = vec![];
     for (article1, article2) in edges {
-        let (article1_num, _, _, _) = articles.get(article1).unwrap();
-        let (article2_num, _, _, _) = articles.get(article2).unwrap();
+        let (article1_num, _, _, _, _) = articles.get(article1).unwrap();
+        let (article2_num, _, _, _, _) = articles.get(article2).unwrap();
         edges_num.push((*article1_num, *article2_num));
+        edges_num_rev.push((*article2_num, *article1_num));
     }
     edges_num
 }
 
-pub fn adjacency_from_edges(edges_num: &EdgeListInt) -> (AdjacencyList, AdjacencyList) {
+pub fn adjacency_from_edges(edges_num: &EdgeListInt) -> AdjacencyList {
     let mut adjacency_list = HashMap::new();
-    let mut adjacency_list_rev = HashMap::new();
     for (edge1, edge2) in edges_num {
         adjacency_list.entry(*edge1).or_insert(Vec::new()).push(*edge2);
-        adjacency_list_rev.entry(*edge2).or_insert(Vec::new()).push(*edge1);
     }
-    (adjacency_list, adjacency_list_rev)
+    adjacency_list
 }
 
 pub mod centrality;

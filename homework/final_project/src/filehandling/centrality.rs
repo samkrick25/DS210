@@ -6,18 +6,18 @@ use std::time::SystemTime;
 
 pub fn get_degrees(edges: &EdgeListStr, articles: &mut ArticleMap) {
     for (edge1, edge2) in edges {
-        let (_, count1, _, _) = articles.get_mut(edge1).unwrap();
-        *count1 += 1;
-        let (_, _, count2, _) = articles.get_mut(edge2).unwrap();
-        *count2 += 1;
+        let (_, _, outdegree, _, _) = articles.get_mut(edge1).unwrap();
+        *outdegree += 1;
+        let (_, _, _, indegree, _) = articles.get_mut(edge2).unwrap();
+        *indegree += 1;
     }
 }
 
 pub fn calc_degrees(articles: &mut ArticleMap) {
     let length = articles.len();
-    for (_, degrees) in articles.iter_mut() {
-        degrees.1 = degrees.1 / length;
-        degrees.2 = degrees.2 / length;
+    for (_, nodeinfo) in articles.iter_mut() {
+        nodeinfo.2 = nodeinfo.2 / length;
+        nodeinfo.3 = nodeinfo.3 / length;
     }
 }
 
@@ -75,10 +75,14 @@ pub fn calculate_betweenness_centrality(
     article_id: &ArticleID,
 ) {
     let connected_components = find_components(adjacency_list);
+    let mut count = 0;
     for component in connected_components {
         let before = SystemTime::now();
-        let mut count = 0;
+        count += 1;
         for start in &component {
+            let article_name = article_id.get(start).unwrap();
+            let (_, component_id, _, _, _) = article_map.get_mut(article_name).unwrap();
+            *component_id = count;
             // let before = SystemTime::now();
             // let mut count = 0;
             for end in &component {
@@ -87,8 +91,8 @@ pub fn calculate_betweenness_centrality(
                     let path = reconstruct_shortest_path(&pred, *start, *end);
                     let length = &path.len();
                     for node in path.iter().skip(1).take(length - 1) {
-                        let article_name = article_id.get(node);
-                        let (_, _, _, between) = article_map.get_mut(article_name.unwrap()).unwrap();
+                        let article_name = article_id.get(node).unwrap();
+                        let (_, _, _, _, between) = article_map.get_mut(article_name).unwrap();
                         *between += 1.0;
                     }
                 }
@@ -102,13 +106,12 @@ pub fn calculate_betweenness_centrality(
         let normal_factor = (component.len() - 1) as f64 * (component.len() - 1) as f64 / 2.0;
         for node in &component {
             let article_name = article_id.get(node);
-            let (_, _, _, betweenness) = article_map.get_mut(article_name.unwrap()).unwrap();
+            let (_, _, _, _, betweenness) = article_map.get_mut(article_name.unwrap()).unwrap();
             *betweenness /= normal_factor;
         }
         let after = SystemTime::now();
         let difference = after.duration_since(before).unwrap();
         println!("component calculated and normalized in {:?}", difference);
-        count += 1;
         println!("Component #{}", count);
     }
 }

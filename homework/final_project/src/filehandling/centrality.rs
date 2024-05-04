@@ -1,11 +1,13 @@
 use super::{ArticleMap, EdgeListStr, ArticleID, AdjacencyList};
 use std::collections::{HashSet, VecDeque};
+use std::time::SystemTime;
 //TODO: ADD COMMENTS
 //TODO: make bfs, and calculate shortest path and predecessors through that, then modify functions to calculate shortest path for all pairs of nodes, 
 
+
 pub fn get_degrees(edges: &EdgeListStr, articles: &mut ArticleMap) {
     for (edge1, edge2) in edges {
-        dbg!(&edge1, &edge2);
+        //dbg!(&edge1, &edge2);
         let (_, count1, _, _) = articles.get_mut(edge1).unwrap();
         *count1 += 1;
         let (_, _, count2, _) = articles.get_mut(edge2).unwrap();
@@ -16,7 +18,7 @@ pub fn get_degrees(edges: &EdgeListStr, articles: &mut ArticleMap) {
 pub fn calc_degrees(articles: &mut ArticleMap) {
     let length = articles.len();
     for (_, degrees) in articles.iter_mut() {
-        dbg!(&degrees);
+        //dbg!(&degrees);
         degrees.1 = degrees.1 / length;
         degrees.2 = degrees.2 / length;
     }
@@ -26,7 +28,7 @@ pub fn reconstruct_shortest_path(
     pred: &Vec<Option<usize>>, 
     start: usize, 
     end: usize,
-) -> Option<Vec<usize>> {
+) -> Vec<usize> {
     let mut path = Vec::new();
     let mut current = Some(end);
     while let Some(node) = current {
@@ -43,7 +45,7 @@ pub fn reconstruct_shortest_path(
         }
     }
     path.reverse();
-    Some(path)
+    path
 }
 
 pub fn bfs_predecessors(adjacency_list: &AdjacencyList, start: usize, article_id: &ArticleID) -> Vec<Option<usize>> {
@@ -76,27 +78,34 @@ pub fn calculate_betweenness_centrality(
     article_id: &ArticleID,
 ) {
     let connected_components = find_components(adjacency_list);
-
+    let before = SystemTime::now();
     for component in connected_components {
-        println!("looking at component");
+        //println!("looking at component");
+        let before = SystemTime::now();
         for start in &component {
-            println!("looking at start");
+            let before = SystemTime::now();
+            //println!("looking at start");
             for end in &component {
-                println!("end");
+                //println!("end");
                 if start != end {
                     let pred = bfs_predecessors(&adjacency_list, *start, &article_id);
                     let path = reconstruct_shortest_path(&pred, *start, *end);
-                    println!("{:?}", path);
-                    let length = path.clone().unwrap().len();
-                    for node in path.unwrap().iter().skip(1).take(length - 1) {
+                    //println!("{:?}", path);
+                    let length = &path.len();
+                    for node in path.iter().skip(1).take(length - 1) {
                         let article_name = article_id.get(node);
                         let (_, _, _, between) = article_map.get_mut(article_name.unwrap()).unwrap();
                         *between += 1.0;
-                        println!("Betweenness added");
                     }
                 }
             }
+            let after = SystemTime::now();
+            let difference = after.duration_since(before).unwrap();
+            println!("endpoint calcualated in {:?}", difference);
         }
+        let after = SystemTime::now();
+        let difference = after.duration_since(before).unwrap();
+        println!("startpoint calcualated in {:?}", difference);
         let normal_factor = (component.len() - 1) as f64 * (component.len() - 1) as f64 / 2.0;
         for node in &component {
             let article_name = article_id.get(node);
@@ -104,6 +113,9 @@ pub fn calculate_betweenness_centrality(
             *betweenness /= normal_factor;
         }
     }
+    let after = SystemTime::now();
+    let difference = after.duration_since(before).unwrap();
+    println!("component calcualated in {:?}", difference);
 }
 
 fn dfs(
@@ -117,7 +129,7 @@ fn dfs(
     component.push(node);
     // Visit all unvisited neighbors
     if adjacency_list.contains_key(&node) {
-        println!("were in");
+        //println!("were in");
         for &neighbor in &adjacency_list[&node] {
             if !visited.contains(&neighbor) {
                 dfs(neighbor, adjacency_list, visited, component);

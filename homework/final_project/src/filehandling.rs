@@ -65,18 +65,21 @@ pub fn read_edges(path: &str) -> EdgeListStr {
 }
 
 pub fn edge_string_to_number(articles: &ArticleMap, edges: &EdgeListStr) -> EdgeListInt {
+    //This function turns the edgelist from strings into numbers. The articles are initially brought in as strings and
+    //the initial edge list is strings, this function takes the edge list as strings and turns it into integers based on the
+    //line that the article name is on. 
     let mut edges_num = vec![];
-    let mut edges_num_rev = vec![];
     for (article1, article2) in edges {
         let (article1_num, _, _, _, _) = articles.get(article1).unwrap();
         let (article2_num, _, _, _, _) = articles.get(article2).unwrap();
         edges_num.push((*article1_num, *article2_num));
-        edges_num_rev.push((*article2_num, *article1_num));
     }
     edges_num
 }
 
 pub fn adjacency_from_edges(edges_num: &EdgeListInt) -> AdjacencyList {
+    //this creates an adjacency list from the edge list, this is a directed graph so 
+    //each edge only means a neighbor in one direction
     let mut adjacency_list = HashMap::new();
     for (edge1, edge2) in edges_num {
         adjacency_list.entry(*edge1).or_insert(Vec::new()).push(*edge2);
@@ -85,23 +88,30 @@ pub fn adjacency_from_edges(edges_num: &EdgeListInt) -> AdjacencyList {
 }
 
 pub trait TopElementsPrinter {
+    //this trait is to print the top 20 centrality scores, has to be done like this since you can't have an implementation
+    //written for a type defined with the type keyword
     fn print_top_20_by_criteria(&self, criteria: &str);
 }
 
 impl TopElementsPrinter for ArticleMap {
     fn print_top_20_by_criteria(&self, criteria: &str) {
+        //this prints the top 20 nodes in each centrality score
+        //it will take a string slice as an argument, corresponding to which centrality measure I want to sort by
         match criteria {
             "indegree" => {
                 let mut indeg_vec: Vec<_> = self.into_iter().collect();
-                indeg_vec.sort_by_key(|&(_, (_, _, value, _, _))| value);
+                //here the hashmap is converted into a vector and then sorted by the specific value corresponding
+                //to the centrality measure that I want to sort by
+                indeg_vec.sort_by_key(|&(_, (_, _, value, _, _))| value); //indegree centrality is in the 3rd position
                 for (i, (k, v)) in indeg_vec.iter().enumerate() {
                     if i >= 20 { break; }
                     println!("{} indegree centrality: {}", k, v.2);
                 }
             },
+            //same framework is used to sort by outdegree
             "outdegree" => {
                 let mut outdeg_vec: Vec<_> = self.into_iter().collect();
-                outdeg_vec.sort_by_key(|&(_, (_, _, _, value, _))| value);
+                outdeg_vec.sort_by_key(|&(_, (_, _, _, value, _))| value); //outdegree in the 4th position
                 for (i, (k, v)) in outdeg_vec.iter().enumerate() {
                     if i >= 20 { break; }
                     println!("{} outdegree centrality: {}", k, v.3);
@@ -109,6 +119,8 @@ impl TopElementsPrinter for ArticleMap {
             },
             "betweenness" => {
                 let mut between_vec: Vec<_> = self.into_iter().collect();
+                //this has to be sorted with partial_cmp since the values are f64s instead of int's
+                //sort_by_key doesn't work with floats since it requires the values to implement Ord
                 between_vec.sort_by(|(_, (_, _, _, _, a)), (_, (_, _, _, _, b))| a.partial_cmp(b).unwrap());
                 for (i, (k, v)) in between_vec.iter().enumerate() {
                     if i >= 20 { break; }

@@ -2,18 +2,20 @@ use super::{ArticleMap, EdgeListStr, ArticleID, AdjacencyList};
 use std::collections::{HashSet, VecDeque};
 use std::time::SystemTime;
 //TODO: ADD COMMENTS
-//TODO: write each component in the betweenness calculation in parallel
 
 pub fn get_degrees(edges: &EdgeListStr, articles: &mut ArticleMap) {
+    //this calculates the degree centrality by taking each edge, adding one to the outdegree centrality for the 
+    //start node and adds one to the indegree centrality for the end node.
     for (edge1, edge2) in edges {
-        let (_, _, outdegree, _, _) = articles.get_mut(edge1).unwrap();
+        let (_, _, outdegree, _, _) = articles.get_mut(edge1).unwrap(); //pattern match since outdegree kept in 3rd position
         *outdegree += 1;
-        let (_, _, _, indegree, _) = articles.get_mut(edge2).unwrap();
+        let (_, _, _, indegree, _) = articles.get_mut(edge2).unwrap();//pattern match since indegree kept in 4th position
         *indegree += 1;
     }
 }
 
 pub fn calc_degrees(articles: &mut ArticleMap) {
+    //this normalizes the degree scores by dividing by the total number of nodes
     let length = articles.len();
     for (_, nodeinfo) in articles.iter_mut() {
         nodeinfo.2 = nodeinfo.2 / length;
@@ -26,6 +28,11 @@ fn reconstruct_shortest_path(
     start: usize, 
     end: usize,
 ) -> Vec<usize> {
+    //this function is written for use in the betweenness centrality calculation.
+    //it takes a list of predecessors for the given end  node and reconstructs the shortest path between
+    //that end node and a given start node. It will calculate the shortest path in reverse, since
+    //it traverses the graph in reverse, starting from the ending node to do this, so before I output 
+    //I have to reverse the path 
     let mut path = Vec::new();
     let mut current = Some(end);
     while let Some(node) = current {
@@ -46,6 +53,10 @@ fn reconstruct_shortest_path(
 }
 
 fn bfs_predecessors(adjacency_list: &AdjacencyList, start: usize, article_id: &ArticleID) -> Vec<Option<usize>> {
+    //this function does a BFS of my graph in order to create a list of predecessors for any given node. This predecessors list is 
+    //used to reconstruct the shortest path from one node to any other given node. To do this, while doing a BFS, it will add each node
+    //that it finds as a neighbor for a given node to the list of predecessors for that node, outputting a list for each node that contains
+    //its neighbors listed in order of their distance away from the starting node.
     let num_nodes = article_id.len();
     let mut pred = vec![None; num_nodes];
     let mut visited = vec![false; num_nodes];
@@ -74,6 +85,8 @@ pub fn calculate_betweenness_centrality(
     article_map: &mut ArticleMap,
     article_id: &ArticleID,
 ) -> usize {
+    //This function operates in place on my ArticleMap but also returns usize, corresponding to the number of components in the graph
+    //
     let connected_components = find_components(adjacency_list);
     let component_count = connected_components.len();
     let mut count = 0;
@@ -156,5 +169,5 @@ fn test_degree_cent() {
 
 #[test]
 fn test_between_cent() {
-    
+
 }

@@ -1,12 +1,11 @@
 mod filehandling;
 use filehandling::centrality;
+use crate::filehandling::TopElementsPrinter;
 
 //TODO: write tests for get_degrees, calc_degrees, calc_betweenness
-//library to graph --> plotters
-//3 graphs, if it takes longer than 10min to gen graph, then just plot and highlight the top
-//heatmap/color gradient for betweenness and degree, maybe look for one other graph, maybe try a connected components graph
-//maybe just show part of graph, zoom on an interesting part
-//find one more graph
+//so actual TODO: write tests for my functions, come up with a small graph I can figure out what everything should be and then test from there
+//write functions to sort and print top, probably make that a new module under centrality
+//and comment code, give write up, if i have time rework articlemap values to a struct (I could write all the centrality functions as implementations, they all need articlemap anyways)
 
 fn main() {
     let path_articles = "articles.tsv";
@@ -17,6 +16,9 @@ fn main() {
     let adjacency_list = filehandling::adjacency_from_edges(&edge_list_num);
     centrality::get_degrees(&edge_list_str, &mut article_map);
     centrality::calc_degrees(&mut article_map);
-    centrality::calculate_betweenness_centrality(&adjacency_list, &mut article_map, &article_id_map);
-    //println!("{:?}", article_map)
+    let component_count = centrality::calculate_betweenness_centrality(&adjacency_list, &mut article_map, &article_id_map);
+    println!("There were {} components found", component_count);
+    article_map.print_top_20_by_criteria("indegree");
+    article_map.print_top_20_by_criteria("outdegree");
+    article_map.print_top_20_by_criteria("betweenness");
 }

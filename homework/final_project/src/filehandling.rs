@@ -84,4 +84,40 @@ pub fn adjacency_from_edges(edges_num: &EdgeListInt) -> AdjacencyList {
     adjacency_list
 }
 
+pub trait TopElementsPrinter {
+    fn print_top_20_by_criteria(&self, criteria: &str);
+}
+
+impl TopElementsPrinter for ArticleMap {
+    fn print_top_20_by_criteria(&self, criteria: &str) {
+        match criteria {
+            "indegree" => {
+                let mut indeg_vec: Vec<_> = self.into_iter().collect();
+                indeg_vec.sort_by_key(|&(_, (_, _, value, _, _))| value);
+                for (i, (k, v)) in indeg_vec.iter().enumerate() {
+                    if i >= 20 { break; }
+                    println!("{} indegree centrality: {}", k, v.2);
+                }
+            },
+            "outdegree" => {
+                let mut outdeg_vec: Vec<_> = self.into_iter().collect();
+                outdeg_vec.sort_by_key(|&(_, (_, _, _, value, _))| value);
+                for (i, (k, v)) in outdeg_vec.iter().enumerate() {
+                    if i >= 20 { break; }
+                    println!("{} outdegree centrality: {}", k, v.3);
+                }
+            },
+            "betweenness" => {
+                let mut between_vec: Vec<_> = self.into_iter().collect();
+                between_vec.sort_by(|(_, (_, _, _, _, a)), (_, (_, _, _, _, b))| a.partial_cmp(b).unwrap());
+                for (i, (k, v)) in between_vec.iter().enumerate() {
+                    if i >= 20 { break; }
+                    println!("{} betweenness centrality: {}", k, v.4);
+                }
+            },
+            _ => panic!("Invalid sorting criteria!"),
+        }
+    }
+}
+
 pub mod centrality;

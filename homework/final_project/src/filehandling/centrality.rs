@@ -73,22 +73,25 @@ pub fn calculate_betweenness_centrality(
     adjacency_list: &AdjacencyList, 
     article_map: &mut ArticleMap,
     article_id: &ArticleID,
-) {
+) -> usize {
     let connected_components = find_components(adjacency_list);
+    let component_count = connected_components.len();
     let mut count = 0;
     for component in connected_components {
         let before = SystemTime::now();
         count += 1;
-        for start in &component {
-            let article_name = article_id.get(start).unwrap();
+        let comp_length = &component.len() - 1;
+        for (i, start) in component.clone().into_iter().enumerate() {
+            if i % 500 == 0 {
+                println!("{} starting vertices shortest path to all other vertices checked", i);
+            }
+            let article_name = article_id.get(&start).unwrap();
             let (_, component_id, _, _, _) = article_map.get_mut(article_name).unwrap();
             *component_id = count;
-            // let before = SystemTime::now();
-            // let mut count = 0;
             for end in &component {
-                if start != end {
-                    let pred = bfs_predecessors(&adjacency_list, *start, &article_id);
-                    let path = reconstruct_shortest_path(&pred, *start, *end);
+                if start != *end {
+                    let pred = bfs_predecessors(&adjacency_list, start, &article_id);
+                    let path = reconstruct_shortest_path(&pred, start, *end);
                     let length = &path.len();
                     for node in path.iter().skip(1).take(length - 1) {
                         let article_name = article_id.get(node).unwrap();
@@ -97,13 +100,8 @@ pub fn calculate_betweenness_centrality(
                     }
                 }
             }
-            // let after = SystemTime::now();
-            // let difference = after.duration_since(before).unwrap();
-            // println!("startpoint calculated in {:?}", difference);
-            // count += 1;
-            // println!("startpoint #{}", count);
         }
-        let normal_factor = (component.len() - 1) as f64 * (component.len() - 1) as f64 / 2.0;
+        let normal_factor = comp_length as f64 * comp_length as f64 / 2.0;
         for node in &component {
             let article_name = article_id.get(node);
             let (_, _, _, _, betweenness) = article_map.get_mut(article_name.unwrap()).unwrap();
@@ -114,6 +112,7 @@ pub fn calculate_betweenness_centrality(
         println!("component calculated and normalized in {:?}", difference);
         println!("Component #{}", count);
     }
+    component_count
 }
 
 fn dfs(
@@ -148,4 +147,14 @@ fn find_components(adjacency_list: &AdjacencyList) -> Vec<Vec<usize>> {
     }
 
     components
+}
+
+#[test]
+fn test_degree_cent() {
+
+}
+
+#[test]
+fn test_between_cent() {
+    
 }

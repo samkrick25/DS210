@@ -33,7 +33,7 @@ pub fn read_articles(path: &str) -> (ArticleMap, ArticleID) {
         }                     //listed on line 13
         else {
             let decoded_article = decode(&articleurl).expect("Failed to decode article name!");
-            let owned_article = decoded_article.into_owned();                  //.into_owned is used here since decode() returns a Cow Object,
+            let owned_article = decoded_article.into_owned();         //.into_owned is used here since decode() returns a Cow Object,
             articles.insert(owned_article.clone(), (line_number-12, 0, 0, 0, 0.0)); // and I want to enter it in to my ArticleMap as a String
             article_id.insert(line_number-12, owned_article.clone());
         }

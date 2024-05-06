@@ -14,7 +14,7 @@ fn main() {
     let edge_list_str = filehandling::read_edges(&path_links);
     let edge_list_num = filehandling::edge_string_to_number(&article_map, &edge_list_str);
     let adjacency_list = filehandling::adjacency_from_edges(&edge_list_num);
-    centrality::get_degrees(&edge_list_str, &mut article_map);
+    centrality::get_degrees(&edge_list_num, &mut article_map, &article_id_map);
     centrality::calc_degrees(&mut article_map);
     let component_count = centrality::calculate_betweenness_centrality(&adjacency_list, &mut article_map, &article_id_map);
     println!("There were {} components found", component_count);

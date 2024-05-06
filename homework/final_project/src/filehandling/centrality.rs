@@ -1,16 +1,20 @@
-use super::{ArticleMap, EdgeListStr, ArticleID, AdjacencyList};
+use super::{ArticleMap, EdgeListInt, ArticleID, AdjacencyList};
 use std::collections::{HashSet, VecDeque};
-use std::time::SystemTime;
+//use std::time::SystemTime;
 //TODO: ADD COMMENTS
 
-pub fn get_degrees(edges: &EdgeListStr, articles: &mut ArticleMap) {
+pub fn get_degrees(edges: &EdgeListInt, articles: &mut ArticleMap, article_id: &ArticleID) {
     //this calculates the degree centrality by taking each edge, adding one to the outdegree centrality for the 
     //start node and adds one to the indegree centrality for the end node.
     for (edge1, edge2) in edges {
-        let (_, _, outdegree, _, _) = articles.get_mut(edge1).unwrap(); //pattern match since outdegree kept in 3rd position
-        *outdegree += 1;
-        let (_, _, _, indegree, _) = articles.get_mut(edge2).unwrap();//pattern match since indegree kept in 4th position
-        *indegree += 1;
+        let edge1_str = &article_id[edge1];
+        if let Some(nodeinfo) = articles.get_mut(edge1_str) {//pattern match since outdegree kept in 3rd position
+            nodeinfo.2 += 1;
+        } 
+        let edge2_str = &article_id[edge2];
+        if let Some(nodeinfo) = articles.get_mut(edge2_str) {//pattern match since indegree kept in 4th position
+            nodeinfo.3 += 1;
+        }
     }
 }
 
@@ -86,27 +90,38 @@ pub fn calculate_betweenness_centrality(
     article_id: &ArticleID,
 ) -> usize {
     //This function operates in place on my ArticleMap but also returns usize, corresponding to the number of components in the graph
-    //
+    //This function will compute betweenness centrality of all the nodes in my graph. Betweenness centrality is defined
+    //as the number of total shortest paths between all vertices in a given vertex's component that contain that vertex. To
+    //calculate this I first have to find the components in the graph, done below
     let connected_components = find_components(adjacency_list);
     let component_count = connected_components.len();
     let mut count = 0;
+    //then iterate over each component
     for component in connected_components {
-        let before = SystemTime::now();
         count += 1;
         let comp_length = &component.len() - 1;
+        //and look at each node in that component
         for (i, start) in component.clone().into_iter().enumerate() {
+            //to print a progress report as code runs
             if i % 500 == 0 {
                 println!("{} starting vertices shortest path to all other vertices checked", i);
             }
-            let article_name = article_id.get(&start).unwrap();
-            let (_, component_id, _, _, _) = article_map.get_mut(article_name).unwrap();
+            let article_name = article_id.get(&start).unwrap(); //thes lines add the component id into article map so I know which
+            let (_, component_id, _, _, _) = article_map.get_mut(article_name).unwrap();//component each node is in
             *component_id = count;
+            //This looks at every other node in the component, allowing us to consider all possible pairs of nodes
+            //in each component
             for end in &component {
                 if start != *end {
+                    //if nodes are not the same, reconstruct the predecessors of the starting node, and see what the shortest path
+                    //to the ending node is. The following two functions are commented as to what their function is.
                     let pred = bfs_predecessors(&adjacency_list, start, &article_id);
                     let path = reconstruct_shortest_path(&pred, start, *end);
                     let length = &path.len();
-                    for node in path.iter().skip(1).take(length - 1) {
+                    //then for each node in the shortest path between each start and end node, we will add one to its
+                    //betweenness centrality score
+                    for node in path.iter().skip(1).take(length - 1) { //skip and take are used here to skip the first node and take all but the last node
+                        //since those don't need to increase betweenness
                         let article_name = article_id.get(node).unwrap();
                         let (_, _, _, _, between) = article_map.get_mut(article_name).unwrap();
                         *between += 1.0;
@@ -114,16 +129,15 @@ pub fn calculate_betweenness_centrality(
                 }
             }
         }
+        //Here we create the normalization factor for betweenness centrality, where the comp_length is the length of each component,
+        //or how many possible shortest paths there were, while it is divided by two since I have a directed graph
+        //and this algorithm will count each path twice
         let normal_factor = comp_length as f64 * comp_length as f64 / 2.0;
         for node in &component {
             let article_name = article_id.get(node);
             let (_, _, _, _, betweenness) = article_map.get_mut(article_name.unwrap()).unwrap();
             *betweenness /= normal_factor;
         }
-        let after = SystemTime::now();
-        let difference = after.duration_since(before).unwrap();
-        println!("component calculated and normalized in {:?}", difference);
-        println!("Component #{}", count);
     }
     component_count
 }
@@ -134,6 +148,7 @@ fn dfs(
     visited: &mut HashSet<usize>,
     component: &mut Vec<usize>,
 ) {
+    //this function performs a simple recursive DFS, to be used to find the components of my graph. 
     // Mark the current node as visited
     visited.insert(node);
     component.push(node);
@@ -148,6 +163,9 @@ fn dfs(
 }
 
 fn find_components(adjacency_list: &AdjacencyList) -> Vec<Vec<usize>> {
+    //this function will find the components in the graph, creating a new vector for each component and then doing a dfs from each node
+    //in the component that is unvisited already. This gives us a vector of vectors where each inner vector contains the node 
+    //in a given component corresponding to the index of the inner vector.
     let mut components = Vec::new();
     let mut visited = HashSet::new();
 
